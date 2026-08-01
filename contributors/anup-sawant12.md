@@ -3,7 +3,7 @@ github: anup-sawant12
 name: Anup Sawant
 year: TE
 branch: EXCS
-knows: [python, javascript, git,rest-api,express.js,mysql,mongodb,c++]
+knows: [react,python, javascript, git,rest-api,express.js,mysql,mongodb,c++]
 wants: open source contribution
 ---
 
