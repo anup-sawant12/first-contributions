@@ -27,6 +27,5 @@ repository, not knowing whether it would be accepted.
 VERP exists because our attendance lived in a spreadsheet and I wanted to find
 out whether students could just fix that. Turns out we can.
 
-Ask me anything, in the issue thread or on WhatsApp. No question here is too
-basic, and I would far rather answer the same one twenty times than have you
-quietly give up.
+Ask me anything, in the issue thread. No question here is too basic, and I would
+far rather answer the same one twenty times than have you quietly give up.
