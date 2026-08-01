@@ -21,13 +21,12 @@ jobs:
       - name: Run the validator tests
         run: node --test
 
-      # The generated page must match what the contributor files say. If this
-      # fails, run `node scripts/build-contributors.mjs` and commit the result.
-      - name: Check CONTRIBUTORS.md is up to date
-        run: |
-          node scripts/build-contributors.mjs
-          if [ -n "$(git status --porcelain CONTRIBUTORS.md)" ]; then
-            echo "CONTRIBUTORS.md is stale. Run: node scripts/build-contributors.mjs"
-            git --no-pager diff CONTRIBUTORS.md
-            exit 1
-          fi
+      # There is deliberately no "is CONTRIBUTORS.md up to date" check here.
+      # It was tried and removed. CONTRIBUTORS.md is generated from the
+      # contributors/ directory by build-contributors.yml, which regenerates and
+      # pushes it on every merge to main. Checking its freshness on a pull
+      # request fails by construction: a contributor's pull request adds their
+      # own file and nothing else, so the generated page is always "stale"
+      # inside the pull request. That would put a red X on every single first
+      # contribution -- the exact discouraging first experience this whole
+      # repository exists to avoid.
