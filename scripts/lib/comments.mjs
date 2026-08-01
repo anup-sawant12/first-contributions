@@ -18,6 +18,12 @@ export const MARKER = "<!-- voss-bot:contributor-check -->";
 
 const url = (repo, path) => `https://github.com/${repo}/blob/main/${path}`;
 
+// Shared by successComment and mergeBlockedComment so the two can never drift.
+const routeBlock = (contributor) =>
+  routeFor(contributor.knows)
+    .map((r) => `- **${r.repo}** — ${r.why}`)
+    .join("\n");
+
 export function problemComment({ repo, author, problems }) {
   const list = problems.map((p, i) => `**${i + 1}. ${p.title}**\n\n${p.fix}`).join("\n\n");
 
@@ -46,24 +52,32 @@ export function problemComment({ repo, author, problems }) {
 // Posted when the file is perfect but the merge call itself failed. The
 // contributor must never be left with a red X and no explanation, and must never
 // be told to fix something that is not theirs to fix.
+//
+// This carries the routing block too, and that is not duplication for its own
+// sake. When a maintainer merges by hand, no workflow re-runs, so successComment
+// is never posted -- and the "here is where to go next" pointer, which is the
+// entire point of merging someone in, would be silently lost. This comment has
+// to stand alone as the contributor's last word from the bot.
 export function mergeBlockedComment({ repo, contributor }) {
   return [
     MARKER,
     `### Your file is correct, ${contributor.name.split(" ")[0]}. This one is on us.`,
     "",
-    "Every check passed. The bot could not complete the merge itself because of a permissions setting on our side, so a maintainer will merge this by hand shortly.",
+    "Every check passed. The bot could not press merge itself because of a permissions setting on our side, so a maintainer will merge this by hand shortly.",
     "",
-    "**There is nothing for you to fix and nothing for you to do.** Do not close this or open another one. Your contribution counts from the moment it merges, and it will.",
+    "**There is nothing for you to fix and nothing for you to do.** Do not close this or open another one. You are in; the button is just slow today.",
     "",
-    `While you wait, [pick-an-issue.md](${url(repo, "docs/pick-an-issue.md")}) is worth a read.`,
+    "**Where to go next, based on what you told us you know:**",
+    "",
+    routeBlock(contributor),
+    "",
+    `Read [pick-an-issue.md](${url(repo, "docs/pick-an-issue.md")}), pick one, and comment \`I'd like to work on this\` before you start writing code. [setup-a-voss-project.md](${url(repo, "docs/setup-a-voss-project.md")}) gets it running on your machine.`,
+    "",
+    "Welcome in.",
   ].join("\n");
 }
 
 export function successComment({ repo, contributor }) {
-  const routes = routeFor(contributor.knows)
-    .map((r) => `- **${r.repo}** — ${r.why}`)
-    .join("\n");
-
   return [
     MARKER,
     `### Merged. You are a VOSS contributor, ${contributor.name.split(" ")[0]}.`,
@@ -72,7 +86,7 @@ export function successComment({ repo, contributor }) {
     "",
     "**Where to go next, based on what you told us you know:**",
     "",
-    routes,
+    routeBlock(contributor),
     "",
     `Read [pick-an-issue.md](${url(repo, "docs/pick-an-issue.md")}), find an issue, and comment \`I'd like to work on this\` before you start writing code. Then [setup-a-voss-project.md](${url(repo, "docs/setup-a-voss-project.md")}) gets the project running on your machine.`,
     "",

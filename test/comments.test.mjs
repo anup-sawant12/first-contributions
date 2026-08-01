@@ -106,3 +106,21 @@ test("only successComment claims the pull request merged", () => {
   assert.ok(!blocked.includes("Merged."));
   assert.ok(!problem.includes("Merged."));
 });
+
+// A maintainer merging by hand re-runs no workflow, so this comment is the last
+// thing the contributor ever hears from the bot. It has to route them onward.
+test("mergeBlockedComment routes onward, since no success comment will follow a manual merge", () => {
+  for (const knows of [["none-yet"], ["go"], ["react"], ["dsa", "python"]]) {
+    const body = mergeBlockedComment({ repo: REPO, contributor: { ...contributor, knows } });
+    assert.match(body, /^- \*\*/m, `no route rendered for ${knows.join(",")}`);
+    assert.ok(body.includes("pick-an-issue.md"), "must point at the issue guide");
+  }
+});
+
+test("both terminal comments route to the same places for the same person", () => {
+  const routes = (body) => body.match(/^- \*\*.*$/gm);
+  assert.deepEqual(
+    routes(mergeBlockedComment({ repo: REPO, contributor })),
+    routes(successComment({ repo: REPO, contributor })),
+  );
+});
