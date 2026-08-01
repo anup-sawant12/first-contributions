@@ -2,15 +2,16 @@
 
 # Contributors
 
-1 person has made their first contribution to VOSS Labs.
+2 people have made their first contribution to VOSS Labs.
 
-**By year:** BE 1
+**By year:** BE 2
 
-**By skill:** git 1 · c-cpp 1 · java 1 · python 1 · javascript 1 · typescript 1 · react 1 · go 1 · sql 1
+**By skill:** git 2 · python 2 · javascript 2 · c-cpp 1 · java 1 · typescript 1 · react 1 · go 1 · sql 1
 
 | Name | Year | Branch | Knows | Wants to learn |
 | --- | --- | --- | --- | --- |
 | [Harshal More](https://github.com/harshalmore31) | BE | EXCS | git, c-cpp, java, python, javascript, typescript, react, sql, go | neural systems and brain-inspired computation |
+| [Raj Mali](https://github.com/Rajmali-22) | BE | EXCS | python, javascript, git | open source contribution |
 
 ---
 
