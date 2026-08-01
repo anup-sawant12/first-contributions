@@ -10,11 +10,8 @@
 
 import { readFileSync } from "node:fs";
 import { validateContributor, routeFor } from "./lib/contributor.mjs";
+import { MARKER, problemComment, successComment } from "./lib/comments.mjs";
 
-// Identifies this bot's own comment so it edits that one instead of piling on a
-// new comment every push. Deliberately contains no repository name: renaming the
-// repo must not orphan comments already posted.
-const MARKER = "<!-- voss-bot:contributor-check -->";
 const DIR = "contributors/";
 const TEMPLATE = "contributors/TEMPLATE.md";
 
@@ -138,54 +135,6 @@ async function readPrFile(file) {
 
 // --- talking back to the contributor ---------------------------------------
 
-function problemComment(problems) {
-  const list = problems
-    .map((p, i) => `**${i + 1}. ${p.title}**\n\n${p.fix}`)
-    .join("\n\n");
-
-  return [
-    MARKER,
-    "### Not quite there yet",
-    "",
-    "Nothing is broken and you have not done anything wrong. Here is exactly what to change:",
-    "",
-    list,
-    "",
-    "---",
-    "",
-    "Fix it on your branch, commit, and push. This check runs again by itself and merges you in the moment it passes. You do not need to close this pull request or open a new one.",
-    "",
-    "You can also check your file before pushing:",
-    "",
-    "```",
-    `node scripts/validate.mjs --file ${DIR}${api.author}.md --author ${api.author}`,
-    "```",
-    "",
-    `Stuck for more than a few minutes? Say so right here in this thread, or read [when-youre-stuck.md](docs/when-youre-stuck.md).`,
-  ].join("\n");
-}
-
-function successComment(contributor) {
-  const routes = routeFor(contributor.knows)
-    .map((r) => `- **${r.repo}** — ${r.why}`)
-    .join("\n");
-
-  return [
-    MARKER,
-    `### Merged. You are a VOSS contributor, ${contributor.name.split(" ")[0]}.`,
-    "",
-    "Your name is on [CONTRIBUTORS.md](../blob/main/CONTRIBUTORS.md) now, and that took a real fork, a real branch and a real pull request. That is the same loop every change to every VOSS project goes through.",
-    "",
-    "**Where to go next, based on what you told us you know:**",
-    "",
-    routes,
-    "",
-    "Read [pick-an-issue.md](docs/pick-an-issue.md), find an issue, and comment `I'd like to work on this` before you start writing code. Then [setup-a-voss-project.md](docs/setup-a-voss-project.md) gets the project running on your machine.",
-    "",
-    "Welcome in.",
-  ].join("\n");
-}
-
 async function upsertComment(body) {
   const comments = await gh(`/repos/${api.repo}/issues/${api.pr}/comments?per_page=100`);
   const mine = comments.find((c) => c.body?.includes(MARKER));
@@ -241,7 +190,7 @@ async function runCi() {
     const text = await readPrFile(scope.file);
     const result = validateContributor(text, api.author);
     if (result.ok) {
-      await upsertComment(successComment(result.contributor));
+      await upsertComment(successComment({ repo: api.repo, contributor: result.contributor }));
       await gh(`/repos/${api.repo}/pulls/${api.pr}/merge`, {
         method: "PUT",
         body: JSON.stringify({
@@ -255,7 +204,7 @@ async function runCi() {
     problems = result.problems;
   }
 
-  await upsertComment(problemComment(problems));
+  await upsertComment(problemComment({ repo: api.repo, author: api.author, problems }));
   fail(`${problems.length} problem(s) found. Comment posted on #${api.pr}.`);
 }
 
