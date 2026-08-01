@@ -55,7 +55,7 @@ Two or three lines about yourself.
 
 **5. Commit it.** Scroll down, click **Commit changes**, choose **Create a new branch for this commit and start a pull request**, then **Propose changes**.
 
-**6. Open the pull request.** Check that it is going into `voss-labs/start-here`, branch `main`, then click **Create pull request**.
+**6. Open the pull request.** Check that it is going into `voss-labs/first-contributions`, branch `main`, then click **Create pull request**.
 
 Now wait about thirty seconds. Either it merges, or a comment appears telling you the one thing to change.
 
@@ -68,8 +68,8 @@ Use this if you want the real loop. If git is not installed yet, [git-and-github
 With the [GitHub CLI](https://cli.github.com):
 
 ```bash
-gh repo fork voss-labs/start-here --clone
-cd start-here
+gh repo fork voss-labs/first-contributions --clone
+cd first-contributions
 git checkout -b add-YOUR-USERNAME
 cp contributors/TEMPLATE.md contributors/YOUR-USERNAME.md
 ```

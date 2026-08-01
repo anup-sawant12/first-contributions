@@ -1,4 +1,4 @@
-// Validates a start-here pull request and merges it when it passes.
+// Validates a first-contributions pull request and merges it when it passes.
 //
 // Runs on pull_request_target, which means this process has write access to the
 // repository while the pull request comes from an untrusted fork. It therefore
