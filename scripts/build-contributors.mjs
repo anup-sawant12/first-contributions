@@ -13,8 +13,8 @@ function load() {
   const skipped = [];
 
   for (const entry of readdirSync(DIR).sort()) {
-    if (!entry.endsWith(".md") || entry === "TEMPLATE.md") continue;
-    const expected = entry.replace(/\.md$/, "");
+    if (!/\.md$/i.test(entry) || entry.toUpperCase() === "TEMPLATE.MD") continue;
+    const expected = entry.replace(/\.md$/i, "");
     const result = validateContributor(readFileSync(join(DIR, entry), "utf8"), expected);
     if (result.ok) people.push(result.contributor);
     else skipped.push({ entry, problems: result.problems });
@@ -30,11 +30,14 @@ function render(people) {
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1]);
 
+  // A raw pipe in any field would split the row and break the whole table.
+  const cell = (v) => String(v).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+
   const rows = [...people]
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(
       (p) =>
-        `| [${p.name}](https://github.com/${p.github}) | ${p.year} | ${p.branch} | ${p.knows.join(", ")} | ${p.wants || "—"} |`,
+        `| [${cell(p.name)}](https://github.com/${encodeURIComponent(p.github)}) | ${cell(p.year)} | ${cell(p.branch)} | ${cell(p.knows.join(", "))} | ${cell(p.wants || "—")} |`,
     );
 
   const lines = [

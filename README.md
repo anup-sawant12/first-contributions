@@ -24,13 +24,15 @@ Use this if you have never used git, or you are on a phone, or you just want to 
 
 **1. Fork this repository.** Click **Fork** at the top right of this page, then **Create fork**. You now have your own copy.
 
-**2. In your fork, open the `contributors` folder.** Click **Add file**, then **Create new file**.
+**2. In your fork, open the `contributors` folder first.** This matters — open the folder, then click **Add file**, then **Create new file**. GitHub will already show `contributors/` in front of the name box.
 
-**3. Name the file after your GitHub username**, with `.md` on the end. If your username is `priya-k`, the box should read:
+**3. Type only your GitHub username** and `.md` — nothing else. If your username is `priya-k`, type:
 
 ```
-contributors/priya-k.md
+priya-k.md
 ```
+
+The whole line should end up reading `contributors/priya-k.md`. If it says `contributors/contributors/priya-k.md`, you typed the folder twice — delete the extra one.
 
 The name has to match your username exactly. That is what keeps everyone's file separate so nobody ever hits a merge conflict here.
 

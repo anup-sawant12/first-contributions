@@ -10,6 +10,12 @@ on:
 permissions:
   contents: write
 
+# A burst of merges would otherwise race: several runs regenerate the same file
+# and all but the first fail to push against a moved main.
+concurrency:
+  group: build-contributors
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest

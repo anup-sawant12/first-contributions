@@ -10,10 +10,9 @@
 
 import { readFileSync } from "node:fs";
 import { validateContributor, routeFor } from "./lib/contributor.mjs";
+import { checkScope, DIR } from "./lib/scope.mjs";
 import { MARKER, problemComment, successComment, mergeBlockedComment } from "./lib/comments.mjs";
 
-const DIR = "contributors/";
-const TEMPLATE = "contributors/TEMPLATE.md";
 
 const api = {
   token: process.env.GH_TOKEN,
@@ -49,73 +48,6 @@ async function ghUrl(url, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// --- checks that run before we look inside the file ------------------------
-
-function checkScope(files, author) {
-  const touched = files.filter((f) => f.filename.startsWith(DIR) && f.filename !== TEMPLATE);
-  const others = files.filter((f) => !f.filename.startsWith(DIR) && f.filename !== TEMPLATE);
-
-  if (touched.length === 0) {
-    return { skip: true };
-  }
-
-  if (others.length > 0) {
-    return {
-      problems: [
-        {
-          title: "This pull request changes files outside `contributors/`.",
-          fix:
-            `Your first contribution should add exactly one file: \`${DIR}${author}.md\`. ` +
-            `Please open a separate pull request for ${others
-              .slice(0, 5)
-              .map((f) => `\`${f.filename}\``)
-              .join(", ")}. Keeping them apart means this one can merge automatically.`,
-        },
-      ],
-    };
-  }
-
-  if (touched.length > 1) {
-    return {
-      problems: [
-        {
-          title: `This pull request changes ${touched.length} files in \`contributors/\`.`,
-          fix: `Add only your own file, \`${DIR}${author}.md\`. Remove the others from this branch and push again.`,
-        },
-      ],
-    };
-  }
-
-  const file = touched[0];
-
-  if (file.status !== "added" && file.status !== "modified") {
-    return {
-      problems: [
-        {
-          title: `The file was \`${file.status}\`, which this check does not allow.`,
-          fix: "A first contribution adds your own file. It should not rename or delete anything.",
-        },
-      ],
-    };
-  }
-
-  const expected = `${DIR}${author}.md`;
-  if (file.filename.toLowerCase() !== expected.toLowerCase()) {
-    return {
-      problems: [
-        {
-          title: `The file is at \`${file.filename}\`, but it has to be at \`${expected}\`.`,
-          fix:
-            `The filename must match your GitHub username exactly. You opened this pull request as \`${author}\`, ` +
-            `so rename the file to \`${expected}\` and push again. That is what keeps everyone's file separate ` +
-            `so nobody ever hits a merge conflict here.`,
-        },
-      ],
-    };
-  }
-
-  return { file };
-}
 
 // --- reading the file out of the fork, without trusting it -----------------
 
@@ -176,12 +108,33 @@ async function runCi() {
     if (!value) fail(`Missing required environment value: ${key}`);
   }
 
+  const pr = await gh(`/repos/${api.repo}/pulls/${api.pr}`);
   const files = await gh(`/repos/${api.repo}/pulls/${api.pr}/files?per_page=100`);
   const scope = checkScope(files, api.author);
 
   if (scope.skip) {
-    console.log("No contributor file in this pull request. Leaving it for a maintainer to review.");
+    console.log("This pull request changes nothing. Leaving it for a maintainer.");
     return;
+  }
+
+  // A draft pull request cannot be merged, and GitHub returns 405 rather than a
+  // permissions error. Without this the contributor was told the failure was
+  // ours and to sit tight -- and marking it Ready for review is in the trigger
+  // list below, so the check re-runs the moment they do.
+  if (pr.draft) {
+    await upsertComment(
+      problemComment({
+        repo: api.repo,
+        author: api.author,
+        problems: [
+          {
+            title: "This pull request is still a draft, so it cannot be merged yet.",
+            fix: "Scroll to the bottom of the pull request and press **Ready for review**. Nothing else needs to change -- this check runs again by itself the moment you do.",
+          },
+        ],
+      }),
+    );
+    fail(`#${api.pr} is a draft.`);
   }
 
   let problems = scope.problems;
@@ -199,10 +152,36 @@ async function runCi() {
           method: "PUT",
           body: JSON.stringify({
             merge_method: "squash",
+            // Pin the merge to the exact commit that was validated. Without
+            // this, a push landing between the check and the merge would be
+            // merged without ever being looked at.
+            sha: pr.head.sha,
             commit_title: `feat: add ${result.contributor.github} to contributors (#${api.pr})`,
           }),
         });
       } catch (error) {
+        // Two students merging seconds apart makes GitHub reject the second with
+        // "Base branch was modified". That is a race, not a problem with their
+        // file, so retry once before telling anyone anything.
+        const raced = /Base branch was modified/i.test(error.message);
+        if (raced) {
+          await new Promise((r) => setTimeout(r, 4000));
+          try {
+            await gh(`/repos/${api.repo}/pulls/${api.pr}/merge`, {
+              method: "PUT",
+              body: JSON.stringify({
+                merge_method: "squash",
+                sha: pr.head.sha,
+                commit_title: `feat: add ${result.contributor.github} to contributors (#${api.pr})`,
+              }),
+            });
+            await upsertComment(successComment({ repo: api.repo, contributor: result.contributor }));
+            console.log(`Merged ${api.author} on retry after a base-branch race.`);
+            return;
+          } catch (retryError) {
+            error.message += `\nRetry also failed: ${retryError.message}`;
+          }
+        }
         // The file is fine; only our side failed. Say exactly that, and never
         // ask the contributor to fix something that is not theirs to fix.
         await upsertComment(mergeBlockedComment({ repo: api.repo, contributor: result.contributor }));
@@ -220,4 +199,32 @@ async function runCi() {
 }
 
 const args = process.argv.slice(2);
-await (args.includes("--file") ? runLocal(args) : runCi());
+
+if (args.includes("--file")) {
+  await runLocal(args);
+} else {
+  // A contributor must never be left with a red X and no explanation. Any error
+  // that reaches here -- a GitHub outage, a rate limit, a bug of ours -- is not
+  // something they can act on, so say so plainly rather than letting the job die
+  // with a stack trace only a maintainer will ever read.
+  try {
+    await runCi();
+  } catch (error) {
+    console.error(error);
+    try {
+      await upsertComment(
+        [
+          MARKER,
+          "### Something broke on our side",
+          "",
+          "This is not your fault and there is nothing in your file to fix. Our check hit an unexpected error before it could finish, so a maintainer will take a look and merge you in by hand.",
+          "",
+          "Leave this pull request open. You do not need to do anything.",
+        ].join("\n"),
+      );
+    } catch {
+      console.error("Could not post the failure comment either.");
+    }
+    process.exit(1);
+  }
+}
