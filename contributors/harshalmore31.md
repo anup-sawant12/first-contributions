@@ -40,6 +40,3 @@ out whether students could just fix that. Turns out we can.
 
 Ask me anything, in the issue thread. No question here is too basic, and I would
 far rather answer the same one twenty times than have you quietly give up.
-
-If you are reading this because you are about to write your own file: yours
-does not need to be this long.
