@@ -18,7 +18,7 @@ I build AI infrastructure — systems that ship to production rather than demos.
 I created and architected [Memori](https://github.com/MemoriLabs/Memori), a
 SQL-native memory layer for LLMs and agents, and built its first two production
 versions: multi-database backends across SQLite, Postgres, MySQL, MongoDB and
-Oracle, one-click deployment, and the developer docs and cookbook. It is at 15.6k
+Oracle, one-click deployment, and the developer docs and cookbook. It is past 15k
 stars. I am a core contributor to [Swarms](https://github.com/kyegomez/swarms),
 an enterprise multi-agent framework, where I integrated the AI Co-Scientist
 system and vision, streaming and memory utilities, built the test suites and
