@@ -10,7 +10,7 @@
 
 import { readFileSync } from "node:fs";
 import { validateContributor, routeFor } from "./lib/contributor.mjs";
-import { MARKER, problemComment, successComment } from "./lib/comments.mjs";
+import { MARKER, problemComment, successComment, mergeBlockedComment } from "./lib/comments.mjs";
 
 const DIR = "contributors/";
 const TEMPLATE = "contributors/TEMPLATE.md";
@@ -190,14 +190,25 @@ async function runCi() {
     const text = await readPrFile(scope.file);
     const result = validateContributor(text, api.author);
     if (result.ok) {
+      // Merge first, comment second. The other order once told a contributor
+      // "Merged. You are a VOSS contributor" on a pull request that then failed
+      // to merge and sat open with a red X. A comment claiming something that
+      // did not happen is worse than no comment at all.
+      try {
+        await gh(`/repos/${api.repo}/pulls/${api.pr}/merge`, {
+          method: "PUT",
+          body: JSON.stringify({
+            merge_method: "squash",
+            commit_title: `feat: add ${result.contributor.github} to contributors (#${api.pr})`,
+          }),
+        });
+      } catch (error) {
+        // The file is fine; only our side failed. Say exactly that, and never
+        // ask the contributor to fix something that is not theirs to fix.
+        await upsertComment(mergeBlockedComment({ repo: api.repo, contributor: result.contributor }));
+        fail(`Validation passed but the merge failed. A maintainer must merge #${api.pr} by hand.\n${error.message}`);
+      }
       await upsertComment(successComment({ repo: api.repo, contributor: result.contributor }));
-      await gh(`/repos/${api.repo}/pulls/${api.pr}/merge`, {
-        method: "PUT",
-        body: JSON.stringify({
-          merge_method: "squash",
-          commit_title: `feat: add ${result.contributor.github} to contributors (#${api.pr})`,
-        }),
-      });
       console.log(`Merged ${api.author}.`);
       return;
     }

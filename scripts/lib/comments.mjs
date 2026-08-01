@@ -43,6 +43,22 @@ export function problemComment({ repo, author, problems }) {
   ].join("\n");
 }
 
+// Posted when the file is perfect but the merge call itself failed. The
+// contributor must never be left with a red X and no explanation, and must never
+// be told to fix something that is not theirs to fix.
+export function mergeBlockedComment({ repo, contributor }) {
+  return [
+    MARKER,
+    `### Your file is correct, ${contributor.name.split(" ")[0]}. This one is on us.`,
+    "",
+    "Every check passed. The bot could not complete the merge itself because of a permissions setting on our side, so a maintainer will merge this by hand shortly.",
+    "",
+    "**There is nothing for you to fix and nothing for you to do.** Do not close this or open another one. Your contribution counts from the moment it merges, and it will.",
+    "",
+    `While you wait, [pick-an-issue.md](${url(repo, "docs/pick-an-issue.md")}) is worth a read.`,
+  ].join("\n");
+}
+
 export function successComment({ repo, contributor }) {
   const routes = routeFor(contributor.knows)
     .map((r) => `- **${r.repo}** — ${r.why}`)

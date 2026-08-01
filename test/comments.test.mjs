@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MARKER, problemComment, successComment } from "../scripts/lib/comments.mjs";
+import { MARKER, problemComment, successComment, mergeBlockedComment } from "../scripts/lib/comments.mjs";
 
 const REPO = "voss-labs/first-contributions";
 
@@ -86,4 +86,23 @@ test("successComment always suggests at least one repository", () => {
     const body = successComment({ repo: REPO, contributor: { ...contributor, knows } });
     assert.match(body, /^- \*\*/m, `no route rendered for ${knows.join(",")}`);
   }
+});
+
+test("mergeBlockedComment never asks the contributor to fix anything", () => {
+  const body = mergeBlockedComment({ repo: REPO, contributor });
+  assert.ok(body.startsWith(MARKER));
+  assert.ok(body.includes("nothing for you to fix"), "must say it is not their problem");
+  assert.ok(!body.toLowerCase().includes("merged."), "must not claim the merge happened");
+  for (const href of links(body)) {
+    assert.ok(href.startsWith("https://"), `relative link "${href}" would 404`);
+  }
+});
+
+test("only successComment claims the pull request merged", () => {
+  const merged = successComment({ repo: REPO, contributor });
+  const blocked = mergeBlockedComment({ repo: REPO, contributor });
+  const problem = problemComment({ repo: REPO, author: "someone", problems });
+  assert.ok(merged.includes("Merged."));
+  assert.ok(!blocked.includes("Merged."));
+  assert.ok(!problem.includes("Merged."));
 });
