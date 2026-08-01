@@ -4,13 +4,13 @@
 
 1 person has made their first contribution to VOSS Labs.
 
-**By year:** TE 1
+**By year:** BE 1
 
-**By skill:** git 1 · python 1 · typescript 1 · react 1 · go 1 · sql 1
+**By skill:** git 1 · dsa 1 · python 1 · typescript 1 · react 1 · go 1 · sql 1
 
 | Name | Year | Branch | Knows | Wants to learn |
 | --- | --- | --- | --- | --- |
-| [Harshal More](https://github.com/harshalmore31) | TE | EXCS | git, typescript, react, go, python, sql | distributed systems |
+| [Harshal More](https://github.com/harshalmore31) | BE | EXCS | git, python, typescript, react, go, sql, dsa | distributed systems |
 
 ---
 
