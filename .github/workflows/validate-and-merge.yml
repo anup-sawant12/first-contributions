@@ -1,0 +1,36 @@
+name: Validate and merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: start-here-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      # pull_request_target runs with write permissions against the base
+      # repository. There is deliberately no `ref:` here: checking out the
+      # pull request would let anyone who opens one run their own code with
+      # those permissions. Everything below runs the base repository's
+      # scripts, and the contributor's file is only ever read, never executed.
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate the contributor file, and merge it if it passes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: node scripts/validate.mjs
