@@ -3,7 +3,7 @@ github: harshalmore31
 name: Harshal More
 year: BE
 branch: EXCS
-knows: [git, dsa, c-cpp, java, python, javascript, typescript, react, html-css, sql, go]
+knows: [git, c-cpp, java, python, javascript, typescript, react, html-css, sql, go]
 wants: neural systems and brain-inspired computation
 ---
 
