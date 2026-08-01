@@ -6,11 +6,11 @@
 
 **By year:** BE 1
 
-**By skill:** git 1 · c-cpp 1 · java 1 · python 1 · javascript 1 · typescript 1 · react 1 · go 1 · html-css 1 · sql 1
+**By skill:** git 1 · c-cpp 1 · java 1 · python 1 · javascript 1 · typescript 1 · react 1 · go 1 · sql 1
 
 | Name | Year | Branch | Knows | Wants to learn |
 | --- | --- | --- | --- | --- |
-| [Harshal More](https://github.com/harshalmore31) | BE | EXCS | git, c-cpp, java, python, javascript, typescript, react, html-css, sql, go | neural systems and brain-inspired computation |
+| [Harshal More](https://github.com/harshalmore31) | BE | EXCS | git, c-cpp, java, python, javascript, typescript, react, sql, go | neural systems and brain-inspired computation |
 
 ---
 
